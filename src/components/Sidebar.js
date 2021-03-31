@@ -15,8 +15,12 @@ import {
   PeopleAlt,
 } from "@material-ui/icons";
 import SidebarOption from "./SidebarOption";
+import { useCollection } from "react-firebase-hooks/firestore";
+import { db } from "../firebaseConfig";
 
 function Sidebar() {
+  const [channels, loading, error] = useCollection(db.collection("rooms"));
+
   return (
     <SidebarContainer>
       <SidebarHeader>
@@ -41,6 +45,15 @@ function Sidebar() {
       <SidebarOption Icon={ExpandMore} title="Threads" />
       <hr />
       <SidebarOption Icon={Add} title="Add Channel" addChannelOption />
+
+      {channels?.docs.map((item) => (
+        <SidebarOption
+          key={item.id}
+          id={item.id}
+          title={item.data().name}
+          addChannelOption
+        />
+      ))}
     </SidebarContainer>
   );
 }
