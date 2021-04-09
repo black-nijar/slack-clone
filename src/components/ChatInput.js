@@ -1,23 +1,28 @@
 import React, { useRef, useState } from "react";
 import styled from "styled-components";
 import { Button } from "@material-ui/core";
-import { db } from "../firebaseConfig";
+import { auth, db } from "../firebaseConfig";
 import firebase from "firebase";
+import { useAuthState } from "react-firebase-hooks/auth";
 
-const ChatInput = ({ channelName, channelId }) => {
+const ChatInput = ({ channelName, channelId, chatRef }) => {
   const [message, setMessage] = useState("");
-
+  const [user] = useAuthState(auth);
   const sendMessage = (e) => {
     e.preventDefault();
-
-    if (!channelId) {
-      return false;
+    if (message.length > 0) {
+      if (!channelId) {
+        return false;
+      }
+      db.collection("rooms").doc(channelId).collection("messages").add({
+        message: message,
+        timestamp: firebase.firestore.FieldValue.serverTimestamp(),
+        user: user?.displayName,
+        userImage: user?.photoURL,
+      });
+      chatRef?.current?.scrollIntoView({ behavior: "smooth" });
+      setMessage("");
     }
-    db.collection("rooms").doc().collection("messages").add({
-      message: message,
-      timestamp: firebase.firestore.FieldValue.serverTimestamp(),
-    });
-    setMessage("");
   };
 
   return (
@@ -26,9 +31,9 @@ const ChatInput = ({ channelName, channelId }) => {
         <input
           value={message}
           onChange={(e) => setMessage(e.target.value)}
-          placeholder={`Message #Room`}
+          placeholder={`Message #${channelName}`}
         />
-        <Button hidden onClick={sendMessage}>
+        <Button hidden onClick={sendMessage} type="submit">
           SEND
         </Button>
       </form>
